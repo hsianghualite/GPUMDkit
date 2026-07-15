@@ -1,7 +1,27 @@
 """
-@Author   : Xin Wu
-@Contact  : xinwuchn97@gmial.com
-@Remark   : Post-processing script for NEMD (Non-Equilibrium Molecular Dynamics) thermal conductivity calculations
+=============================================================================
+GPUMDkit: A User-Friendly Toolkit for GPUMD and NEP
+Repository: https://github.com/zhyan0603/GPUMDkit
+Citation: Z. Yan et al., GPUMDkit: A User-Friendly Toolkit for GPUMD and NEP,
+          MGE Advances, 2026, 4, e70074 (https://doi.org/10.1002/mgea.70074)
+=============================================================================
+Script:     plt_nemd.py
+Category:   Plot Scripts
+Purpose:    Post-processing for NEMD (Non-Equilibrium Molecular Dynamics)
+            thermal conductivity calculations, including temperature profile,
+            thermostat energy, and optional SHC spectral analysis.
+Usage:      gpumdkit.sh -plt nemd [real_length] [scale_eff_size] [cutoff_freq] [save]
+            python plt_nemd.py [real_length] [scale_eff_size] [cutoff_freq] [save]
+Arguments:
+  real_length     Real length of heat transfer zone in nm (set to 'Auto' for auto)
+  scale_eff_size  Scale factor for effective cross-sectional area (default: 1)
+  cutoff_freq     Cutoff frequency for SHC in THz (default: 60)
+  save            Save the plot as 'nemd.png' instead of displaying it
+Output:
+  nemd.png    (if save is used, or if backend is non-interactive)
+Author:     Xin Wu (xinwuchn97@gmial.com)
+Last-modified: 2026-05-16
+=============================================================================
 """
 
 from pylab import *
@@ -13,6 +33,8 @@ import os
 # Figure Properties
 aw, fs = 1.2, 12
 matplotlib.rc('font', size=fs)
+matplotlib.rc('font', family='sans-serif')
+matplotlib.rc('font', **{'sans-serif': ['Arial', 'DejaVu Sans', 'Liberation Sans']})
 matplotlib.rc('axes', linewidth=aw)
 
 def set_fig_properties(ax_list, tl=4, tw=1.2, tlm=4):
@@ -21,9 +43,11 @@ def set_fig_properties(ax_list, tl=4, tw=1.2, tlm=4):
         ax.tick_params(which='both', length=tl, width=tw, direction='in', right=True, top=True)
         ax.tick_params(which='minor', length=tlm)
 
+trap = np.trapezoid if hasattr(np, "trapezoid") else getattr(np, "trapz")
+
 def print_usage():
     """Print usage instructions"""
-    print("Usage: gpumdkit -plt nemd [real_length] [scale_eff_size] [cutoff_freq] [save]")
+    print("Usage: gpumdkit.sh -plt nemd [real_length] [scale_eff_size] [cutoff_freq] [save]")
     print("Params:")
     print("  real_length   : Real length of heat tranfer zone in nm (set to 'Auto', with auto-calculation)")
     print("  scale_eff_size: Optional, Scale factor for effective cross-sectional area (default: 1)")
@@ -33,7 +57,7 @@ def print_usage():
     print("                     - S_eff: real or effective area of the system")
     print("  cutoff_freq   : Optional, Cutoff frequency for SHC calculation in THz (default: 60)")
     print("  save          : Optional, save the plot as 'nemd.png'")
-    print("  !!! Note !!!  : If no SHC data, set [scale_eff_size] and [cutoff_freq] to any number as placeholders when using 'save'.")
+    print("  !!! Note !!!  : If no SHC data, set [scale_eff_size] and [cutoff_freq] to any non-zero number as placeholders when using 'save'.")
 
 class NEMD_Processor:
     def __init__(self, _directory, _real_length=None, _scale_eff_size=1, _cutoff_freq=60, _scale_vacuum=1):
@@ -149,7 +173,7 @@ class NEMD_Processor:
         if 'Results' not in Reformed_SHC_data:
             Reformed_SHC_data['Results'] = {}
         for key, col in zip(["in", "out", "tot"], ["k_g_wi", "k_g_wo", "k_g_wt"]):
-            values = [np.trapz(Reformed_SHC_data[col][:, i], dx=Reformed_SHC_data["nu"][0, 0]) for i in range(N_repeat)]
+            values = [trap(Reformed_SHC_data[col][:, i], dx=Reformed_SHC_data["nu"][0, 0]) for i in range(N_repeat)]
             Reformed_SHC_data['Results'][f"{key}_ave"] = np.mean(values)
             Reformed_SHC_data['Results'][f"{key}_std"] = np.std(values) / np.sqrt(N_repeat)
 
@@ -162,6 +186,7 @@ class NEMD_Processor:
         Reformed_NEMD_data = {}
 
         # Get parameters from run.in
+        direction = None  # heat transfer axis; set by compute_shc, else auto-detected below
         with open(self.path['run'], 'r') as file:
             found_nemd = False
             for line in file:
@@ -203,7 +228,19 @@ class NEMD_Processor:
         Q = ((Q_in + Q_out) / 2).reshape(1, -1)  # eV/ps
 
         model = read(self.path['model'])
-        group = model.get_array("group")
+        group_arr = model.get_array('group')
+        if group_arr.ndim == 1:
+            group = group_arr
+        else:
+            group = group_arr[:, 0]
+
+        if direction is None:
+            # No compute_shc in run.in: infer the heat transfer axis as the
+            # Cartesian direction where the source/sink groups are most separated
+            heat_pos = model.positions[(group == 1)].mean(axis=0)
+            cold_pos = model.positions[(group == N_temp_group - 1)].mean(axis=0)
+            direction = int(np.argmax(np.abs(heat_pos - cold_pos)))
+
         coords_heat = model.positions[(group == 1), direction].mean()
         coords_cold = model.positions[(group == N_temp_group - 1), direction].mean()
         xticks_length = np.linspace(coords_heat, coords_cold, N_temp_group - 1) * 0.1
@@ -250,7 +287,6 @@ class NEMD_Processor:
         print("NEMD Thermal Conductivity Results")
         print("=" * 70)
         print(f"\nEffective length: {Length:.4f} nm")
-        # print(f"Scale_vacuum: {self.scale_vacuum}")
         print(f"Scale_eff_size: {self.scale_eff_size}\n")
         print(f"Thermal conductance G = {Reformed_NEMD_data['G'][0, -2]:.6f} ± {Reformed_NEMD_data['G'][0, -1]:.6f} MW/m²K")
         print(f"Thermal conductivity κ = {Reformed_NEMD_data['k'][0, -2]:.6f} ± {Reformed_NEMD_data['k'][0, -1]:.6f} W/mK")
@@ -343,30 +379,31 @@ class NEMD_Processor:
             # (d) SHC spectral conductance
             subplot2grid((2, 4), (1, 1), colspan=3)
             set_fig_properties([gca()])
-            plot(Reformed_SHC_data['nu'][:, -2], Reformed_SHC_data['k_g_wi'][:, -2], linewidth=2, color='C1')
+            plot(Reformed_SHC_data['nu'][:, -2], Reformed_SHC_data['k_g_wi'][:, -2], linewidth=2, color='C1', label='In-plane component')
             plt.fill_between(Reformed_SHC_data['nu'][:, -2],
                              Reformed_SHC_data['k_g_wi'][:, -2] - Reformed_SHC_data['k_g_wi'][:, -1],
                              Reformed_SHC_data['k_g_wi'][:, -2] + Reformed_SHC_data['k_g_wi'][:, -1],
                              facecolor='C1', alpha=0.3)
-            plot(Reformed_SHC_data['nu'][:, -2], Reformed_SHC_data['k_g_wo'][:, -2], linewidth=2, color='C2')
+            plot(Reformed_SHC_data['nu'][:, -2], Reformed_SHC_data['k_g_wo'][:, -2], linewidth=2, color='C2', label='Out-of-plane component')
             plt.fill_between(Reformed_SHC_data['nu'][:, -2],
                              Reformed_SHC_data['k_g_wo'][:, -2] - Reformed_SHC_data['k_g_wo'][:, -1],
                              Reformed_SHC_data['k_g_wo'][:, -2] + Reformed_SHC_data['k_g_wo'][:, -1],
                              facecolor='C2', alpha=0.3)
-            plot(Reformed_SHC_data['nu'][:, -2], Reformed_SHC_data['k_g_wt'][:, -2], linewidth=2, color='C0')
+            plot(Reformed_SHC_data['nu'][:, -2], Reformed_SHC_data['k_g_wt'][:, -2], linewidth=2, color='C0', label='Total')
             plt.fill_between(Reformed_SHC_data['nu'][:, -2],
                              Reformed_SHC_data['k_g_wt'][:, -2] - Reformed_SHC_data['k_g_wt'][:, -1],
                              Reformed_SHC_data['k_g_wt'][:, -2] + Reformed_SHC_data['k_g_wt'][:, -1],
                              facecolor='C0', alpha=0.3)
-            text(0.45, 0.9, f"$G_{{in}}$ = {res_s['in_ave']:.3f} ± {res_s['in_std']:.2f} MW/m$^2$K",
-                 ha='left', va='top', transform=plt.gca().transAxes, color="C1")
-            text(0.45, 0.8, f"$G_{{out}}$ = {res_s['out_ave']:.3f} ± {res_s['out_std']:.2f} MW/m$^2$K",
-                 ha='left', va='top', transform=plt.gca().transAxes, color="C2")
-            text(0.45, 0.7, f"$G_{{tot}}$ = {res_s['tot_ave']:.3f} ± {res_s['tot_std']:.2f} MW/m$^2$K",
-                 ha='left', va='top', transform=plt.gca().transAxes, color="C0")
+            # text(0.45, 0.9, f"$G_{{in}}$ = {res_s['in_ave']:.3f} ± {res_s['in_std']:.2f} MW/m$^2$K",
+            #      ha='left', va='top', transform=plt.gca().transAxes, color="C1")
+            # text(0.45, 0.8, f"$G_{{out}}$ = {res_s['out_ave']:.3f} ± {res_s['out_std']:.2f} MW/m$^2$K",
+            #      ha='left', va='top', transform=plt.gca().transAxes, color="C2")
+            # text(0.45, 0.7, f"$G_{{tot}}$ = {res_s['tot_ave']:.3f} ± {res_s['tot_std']:.2f} MW/m$^2$K",
+            #      ha='left', va='top', transform=plt.gca().transAxes, color="C0")
+            legend(frameon=False, fontsize=fs)
             xlim(0, self.cutoff_freq)
             ylabel(r'$g$($\omega$) (MW/m$^2$/K/THz)')
-            xlabel(r'$\nu$ (THz)')
+            xlabel(r'$\omega/2\pi$ (THz)')
             title('(d) Spectral thermal conductance')
 
             plt.subplots_adjust(wspace=1, hspace=0.3)

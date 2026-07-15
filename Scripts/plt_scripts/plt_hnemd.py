@@ -1,7 +1,26 @@
 """
-@Author   : Xin Wu
-@Contact  : xinwuchn97@gmial.com
-@Remark   : Post-processing script for HNEMD (Homogenous Non-Equilibrium Molecular Dynamics) thermal conductivity calculations
+=============================================================================
+GPUMDkit: A User-Friendly Toolkit for GPUMD and NEP
+Repository: https://github.com/zhyan0603/GPUMDkit
+Citation: Z. Yan et al., GPUMDkit: A User-Friendly Toolkit for GPUMD and NEP,
+          MGE Advances, 2026, 4, e70074 (https://doi.org/10.1002/mgea.70074)
+=============================================================================
+Script:     plt_hnemd.py
+Category:   Plot Scripts
+Purpose:    Post-processing for HNEMD (Homogeneous Non-Equilibrium Molecular
+            Dynamics) thermal conductivity calculations, including running
+            average and optional SHC spectral analysis.
+Usage:      gpumdkit.sh -plt hnemd [scale_eff_size] [cutoff_freq] [save]
+            python plt_hnemd.py [scale_eff_size] [cutoff_freq] [save]
+Arguments:
+  scale_eff_size  Scale factor for effective cross-sectional area (default: 1)
+  cutoff_freq     Cutoff frequency for SHC in THz (default: 60)
+  save            Save the plot as 'hnemd.png' instead of displaying it
+Output:
+  hnemd.png    (if save is used)
+Author:     Xin Wu (xinwuchn97@gmial.com)
+Last-modified: 2026-05-16
+=============================================================================
 """
 
 import pandas as pd
@@ -14,6 +33,8 @@ from ase.io import read
 # Figure Properties
 aw, fs = 1.2, 12
 matplotlib.rc('font', size=fs)
+matplotlib.rc('font', family='sans-serif')
+matplotlib.rc('font', **{'sans-serif': ['Arial', 'DejaVu Sans', 'Liberation Sans']})
 matplotlib.rc('axes', linewidth=aw)
 
 def set_fig_properties(ax_list, tl=4, tw=1.2, tlm=4):
@@ -22,11 +43,11 @@ def set_fig_properties(ax_list, tl=4, tw=1.2, tlm=4):
         ax.tick_params(which='both', length=tl, width=tw, direction='in', right=True, top=True)
         ax.tick_params(which='minor', length=tlm)
 
-trap = np.trapezoid if hasattr(np, "trapezoid") else np.trapz
+trap = np.trapezoid if hasattr(np, "trapezoid") else getattr(np, "trapz")
 
 def print_usage():
     """Print usage instructions"""
-    print("Usage: gpumdkit -plt hnemd [scale_eff_size] [cutoff_freq] [save]")
+    print("Usage: gpumdkit.sh -plt hnemd [scale_eff_size] [cutoff_freq] [save]")
     print("Params:")
     print("  scale_eff_size: Optional, Scale factor for effective cross-sectional area (default: 1)")
     print("                   • For 3D bulk systems: use 1")
@@ -283,11 +304,11 @@ class HNEMD_Processor:
             plot(t, Reformed_HNEMD_data[f"{key}_out"][:, -1], color='C2', lw=3)
             plot(t, Reformed_HNEMD_data[f"{key}_tot"][:, -1], color='C0', lw=3)
 
-            text(0.95, 0.93, f"$\kappa_{{in}}$ = {res_h[f'{key}_in_ave']:.3f} ± {res_h[f'{key}_in_std']:.2f} W/mK",
+            text(0.95, 0.93, f"$\\kappa_{{\\mathrm{{in}}}}$ = {res_h[f'{key}_in_ave']:.3f} ± {res_h[f'{key}_in_std']:.2f} W/mK",
                  ha='right', va='top', transform=plt.gca().transAxes, color='C1')
-            text(0.95, 0.83, f"$\kappa_{{out}}$ = {res_h[f'{key}_out_ave']:.3f} ± {res_h[f'{key}_out_std']:.2f} W/mK",
+            text(0.95, 0.83, f"$\\kappa_{{\\mathrm{{out}}}}$ = {res_h[f'{key}_out_ave']:.3f} ± {res_h[f'{key}_out_std']:.2f} W/mK",
                  ha='right', va='top', transform=plt.gca().transAxes, color='C2')
-            text(0.95, 0.73, f"$\kappa_{{tot}}$ = {res_h[f'{key}_tot_ave']:.3f} ± {res_h[f'{key}_tot_std']:.2f} W/mK",
+            text(0.95, 0.73, f"$\\kappa_{{\\mathrm{{tot}}}}$ = {res_h[f'{key}_tot_ave']:.3f} ± {res_h[f'{key}_tot_std']:.2f} W/mK",
                  ha='right', va='top', transform=plt.gca().transAxes, color='C0')
             xlim(0, Time_upper)
             xlabel('time (ns)')
@@ -306,27 +327,28 @@ class HNEMD_Processor:
                 # (c) SHC
                 subplot2grid((2, 4), (1, 1), colspan=3)
                 set_fig_properties([gca()])
-                plot(Reformed_SHC_data['nu'][:, -2], Reformed_SHC_data['k_g_wi'][:, -2], linewidth=2, color='C1')
+                plot(Reformed_SHC_data['nu'][:, -2], Reformed_SHC_data['k_g_wi'][:, -2], linewidth=2, color='C1', label='In-plane component')
                 fill_between(Reformed_SHC_data['nu'][:, -2],
                              Reformed_SHC_data['k_g_wi'][:, -2] - Reformed_SHC_data['k_g_wi'][:, -1],
                              Reformed_SHC_data['k_g_wi'][:, -2] + Reformed_SHC_data['k_g_wi'][:, -1],
                              facecolor='C1', alpha=0.3)
-                plot(Reformed_SHC_data['nu'][:, -2], Reformed_SHC_data['k_g_wo'][:, -2], linewidth=2, color='C2')
+                plot(Reformed_SHC_data['nu'][:, -2], Reformed_SHC_data['k_g_wo'][:, -2], linewidth=2, color='C2', label='Out-of-plane component')
                 fill_between(Reformed_SHC_data['nu'][:, -2],
                              Reformed_SHC_data['k_g_wo'][:, -2] - Reformed_SHC_data['k_g_wo'][:, -1],
                              Reformed_SHC_data['k_g_wo'][:, -2] + Reformed_SHC_data['k_g_wo'][:, -1],
                              facecolor='C2', alpha=0.3)
-                plot(Reformed_SHC_data['nu'][:, -2], Reformed_SHC_data['k_g_wt'][:, -2], linewidth=2, color='C0')
+                plot(Reformed_SHC_data['nu'][:, -2], Reformed_SHC_data['k_g_wt'][:, -2], linewidth=2, color='C0', label='Total')
                 fill_between(Reformed_SHC_data['nu'][:, -2],
                              Reformed_SHC_data['k_g_wt'][:, -2] - Reformed_SHC_data['k_g_wt'][:, -1],
                              Reformed_SHC_data['k_g_wt'][:, -2] + Reformed_SHC_data['k_g_wt'][:, -1],
                              facecolor='C0', alpha=0.3)
-                text(0.6, 0.9, f"$\\kappa_{{in}}$ = {res_s['in_ave']:.2f} ± {res_s['in_std']:.2f} W/mK",
-                     ha='left', va='top', transform=gca().transAxes, color='C1')
-                text(0.6, 0.8, f"$\\kappa_{{out}}$ = {res_s['out_ave']:.2f} ± {res_s['out_std']:.2f} W/mK",
-                     ha='left', va='top', transform=gca().transAxes, color='C2')
-                text(0.6, 0.7, f"$\\kappa_{{tot}}$ = {res_s['tot_ave']:.2f} ± {res_s['tot_std']:.2f} W/mK",
-                     ha='left', va='top', transform=gca().transAxes, color='C0')
+                # text(0.6, 0.9, f"$\\kappa_{{in}}$ = {res_s['in_ave']:.2f} ± {res_s['in_std']:.2f} W/mK",
+                #      ha='left', va='top', transform=gca().transAxes, color='C1')
+                # text(0.6, 0.8, f"$\\kappa_{{out}}$ = {res_s['out_ave']:.2f} ± {res_s['out_std']:.2f} W/mK",
+                #      ha='left', va='top', transform=gca().transAxes, color='C2')
+                # text(0.6, 0.7, f"$\\kappa_{{tot}}$ = {res_s['tot_ave']:.2f} ± {res_s['tot_std']:.2f} W/mK",
+                #      ha='left', va='top', transform=gca().transAxes, color='C0')
+                legend(frameon=False, fontsize=fs)
                 xlim(0, self.cutoff_freq)
                 axhline(y=0, color='k', linestyle='--')
                 ylabel(r'$\kappa$($\omega$) (W/m/K/THz)')
@@ -370,8 +392,8 @@ class HNEMD_Processor:
                              Reformed_SHC_data['k_g_wt'][:, -2] - Reformed_SHC_data['k_g_wt'][:, -1],
                              Reformed_SHC_data['k_g_wt'][:, -2] + Reformed_SHC_data['k_g_wt'][:, -1],
                              facecolor='C0', alpha=0.3)
-                text(0.6, 0.7, f"$\\kappa_{{tot}}$ = {res_s['tot_ave']:.2f} ± {res_s['tot_std']:.2f} W/mK",
-                     ha='left', va='top', transform=gca().transAxes)
+                # text(0.6, 0.7, f"$\\kappa_{{tot}}$ = {res_s['tot_ave']:.2f} ± {res_s['tot_std']:.2f} W/mK",
+                #      ha='left', va='top', transform=gca().transAxes)
                 xlim(0, self.cutoff_freq)
                 axhline(y=0, color='k', linestyle='--')
                 ylabel(r'$\kappa$($\omega$) (W/m/K/THz)')
