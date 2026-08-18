@@ -6,10 +6,10 @@
   &nbsp;·&nbsp;
   <strong>简体中文</strong>
   &nbsp;·&nbsp;
-  <a href="https://zhyan0603.github.io/GPUMDkit/">Website</a> &nbsp;·&nbsp;
-  <a href="https://zhyan0603.github.io/GPUMDkit/htmls/index.html">Documentation</a>
+  <a href="https://gpumdkit.cn/">Website</a> &nbsp;·&nbsp;
+  <a href="https://gpumdkit.cn/htmls/index.html">Documentation</a>
   &nbsp;·&nbsp;
-  <a href="https://zhyan0603.github.io/GPUMDkit/gallery.html">Gallery</a>
+  <a href="https://gpumdkit.cn/gallery.html">Gallery</a>
   &nbsp;
 </p>
 <p align="center">
@@ -23,58 +23,65 @@
 
 
 ## 功能特点
-- **简化脚本调用**：轻松运行 GPUMD 和 NEP 相关脚本。
-- **工作流自动化**：自动化常见任务，节省时间，减少人工干预。
-- **用户友好界面**：直观的 shell 命令，提升使用体验。
+- **数据准备**：转换、标记、采样、划分、筛选和检查原子尺度数据集。
+- **工作流自动化**：准备批量 DFT/MD 计算和主动学习工作流。
+- **计算与分析**：计算和分析结构、输运及 NEP 相关性质。
+- **可视化与后处理**：可视化 NEP 训练、分子动力学、扩散和热输运结果。
+- **灵活的使用方式**：支持交互菜单和直接命令行选项。
 
 ## 安装
-按以下步骤安装 `GPUMDkit`：
 
-1. 克隆仓库或下载整个项目。
-
-    ```
-    git clone https://github.com/zhyan0603/GPUMDkit.git
-    ```
-
-    如需下载指定分支，可使用 `-b` 参数，例如：
-
-    ```
-    git clone -b dev https://github.com/zhyan0603/GPUMDkit.git
-    ```
-
-2. 执行以下命令：
-
-    ```
-    cd GPUMDkit; source ./install.sh
-    ```
-
-
-## 依赖项
-
-`GPUMDkit` 的部分高级功能需要以下 Python 包：
+### Conda（推荐）
 
 ```bash
-# 创建干净的 conda 环境
-conda create -n gpumdkit python=3.12
+conda create -n gpumdkit -c gpumdkit -c conda-forge gpumdkit
 conda activate gpumdkit
-
-# 安装所需包
-pip install neptrain ase pymatgen dpdata
 ```
 
-提示：使用 `GPUMDkit` 功能前，请确保已激活 `gpumdkit` 环境。
+部分功能需要额外安装可选依赖：
+
+```bash
+pip install neptrain calorine
+```
+
+### 从源码安装
+
+```bash
+git clone https://github.com/zhyan0603/GPUMDkit.git
+cd GPUMDkit
+source ./install.sh
+```
 
 ## 更新
 
-如果设备可以访问 `github`，直接运行：
+### Conda 安装
 
+如果通过 Conda 安装了 `GPUMDkit`，请使用以下命令更新：
+
+```bash
+conda activate gpumdkit
+conda update -c gpumdkit -c conda-forge gpumdkit
 ```
+
+通过 pip 安装的可选依赖项可根据需要单独更新：
+
+```bash
+pip install --upgrade neptrain calorine
+```
+
+### 源码安装
+
+如果从源码仓库安装了 `GPUMDkit`，请运行：
+
+```bash
 gpumdkit.sh -update
 ```
 
-否则需要手动下载新版本：
+该命令会检查当前安装的 Git 分支，并从同一分支拉取最新更新。
 
-```
+也可以手动下载最新的源码压缩包：
+
+```bash
 wget https://github.com/zhyan0603/GPUMDkit/archive/refs/heads/main.zip
 ```
 
@@ -103,7 +110,7 @@ wget https://github.com/zhyan0603/GPUMDkit/archive/refs/heads/main.zip
              | |_| |  __/| |_| | |  | | |_| |   <| | |_
               \____|_|    \___/|_|  |_|____/|_|\_\_|\__|
     
-              GPUMDkit Version 1.5.6 (dev) (2026-06-17)
+              GPUMDkit Version 1.5.6 (dev) (2026-07-10)
         Core Developer: Zihan YAN (yanzihan@westlake.edu.cn)
      Main Contributors: Denan LI, Xin WU, Zhoulin LIU & Chen HUA
     
@@ -133,13 +140,14 @@ gpumdkit.sh -h
 
 ```
 +-------------------------------------------------------------------------------------------------------+
-|                          GPUMDkit 1.5.6 (dev) (2026-06-17) Command Help                               |
+|                          GPUMDkit 1.5.6 (dev) (2026-07-10) Command Help                               |
 +-------------------------------------------------------------------------------------------------------+
 |                                          MAIN FUNCTIONS                                               |
 +-------------------------------------------------------------------------------------------------------+
 | -h            Show this help table            | -plt <type>        Plot and visualization tools       |
 | -calc <type>  Calculator tools                | -time <gpumd|nep>  Time-consuming analyzer            |
 | -update       Update GPUMDkit                 | -clean             Clean extra files in current dir   |
+| -skill        Show GPUMDkit agent skill info  | -doctor            Check Python environment           |
 +-------------------------------------------------------------------------------------------------------+
 |                                         FORMAT CONVERSION                                             |
 +-------------------------------------------------------------------------------------------------------+
@@ -151,7 +159,7 @@ gpumdkit.sh -h
 | -traj2exyz    ASE traj -> extxyz              | -replicate         Replicate structure                |
 | -addgroup     Add group labels                | -addweight         Add structure weight in extxyz     |
 | -clean_xyz    Clean extra info in extxyz      | -get_frame         Extract specific frame             |
-| -frame_range  Extract frames by range         |                                                       |
+| -frame_range  Extract frames by range         | -dp2xyz            DeepMD npy -> extxyz               |
 +-------------------------------------------------------------------------------------------------------+
 |                                            ANALYSIS                                                   |
 +-------------------------------------------------------------------------------------------------------+
@@ -162,7 +170,7 @@ gpumdkit.sh -h
 | -pda          Probability density analysis    | -filter_box        Filter by box-edge length          |
 | -pynep        Deprecated PyNEP sampling       | -nep_modifier      Modify NEP model interactively     |
 +-------------------------------------------------------------------------------------------------------+
-| Detailed usage: gpumdkit.sh -<option> -h    Plot details: gpumdkit.sh -plt <type> -h                  |
+| Python option help: gpumdkit.sh -<option> -h    Plot list: gpumdkit.sh -plt -h                     |
 +-------------------------------------------------------------------------------------------------------+
 ```
 
@@ -176,9 +184,9 @@ gpumdkit.sh -plt -h
 
 ```
  +-----------------------------------------------------------------------------------------------+
- |                     GPUMDkit 1.5.6 (dev) (2026-06-17) PLOT & VISUALIZATION TOOLS              |
+ |                     GPUMDkit 1.5.6 (dev) (2026-07-10) PLOT & VISUALIZATION TOOLS              |
  +-----------------------------------------------------------------------------------------------+
- |  Usage: gpumdkit.sh -plt <type>                        Help: gpumdkit.sh -plt <type> -h       |
+ |  Usage: gpumdkit.sh -plt <type>                        List: gpumdkit.sh -plt -h              |
  +-----------------------------------------------------------------------------------------------+
  |                                    NEP Training & Evaluation                                  |
  +-----------------------------------------------------------------------------------------------+
@@ -264,13 +272,13 @@ gpumdkit.sh -plt thermo
 gpumdkit.sh -plt thermo save
 ```
 
-更多详细示例和命令选项请参考我们的[文档](https://zhyan0603.github.io/GPUMDkit/)。
+更多详细示例和命令选项请参考我们的[文档](https://gpumdkit.cn/)。
 
 #### 自定义命令
 
 `GPUMDkit` 支持通过 `~/.gpumdkit.in` 文件自定义命令。
 
-你可以在该文件中定义函数来添加自己的快捷命令（例如 `gpumdkit.sh -yourcommand`），从而扩展 `GPUMDkit` 的功能。详细用法请参见[自定义命令文档](https://zhyan0603.github.io/GPUMDkit/)。
+你可以在该文件中定义函数来添加自己的快捷命令（例如 `gpumdkit.sh -yourcommand`），从而扩展 `GPUMDkit` 的功能。详细用法请参见[自定义命令文档](https://gpumdkit.cn/)。
 
 #### Tab 补全支持
 

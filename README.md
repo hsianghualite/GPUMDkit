@@ -6,10 +6,10 @@
   &nbsp;·&nbsp;
   <a href="./docs/README_zh-CN.md">简体中文</a>
   &nbsp;·&nbsp;
-  <a href="https://zhyan0603.github.io/GPUMDkit/">Website</a> &nbsp;·&nbsp;
-  <a href="https://zhyan0603.github.io/GPUMDkit/htmls/index.html">Documentation</a>
+  <a href="https://gpumdkit.cn/">Website</a> &nbsp;·&nbsp;
+  <a href="https://gpumdkit.cn/htmls/index.html">Documentation</a>
   &nbsp;·&nbsp;
-  <a href="https://zhyan0603.github.io/GPUMDkit/gallery.html">Gallery</a>
+  <a href="https://gpumdkit.cn/gallery.html">Gallery</a>
   &nbsp;
 </p>
 <p align="center">
@@ -22,58 +22,65 @@
 <p style="text-align: justify;"><strong>GPUMDkit</strong> is a toolkit for the GPUMD (<em>Graphics Processing Units Molecular Dynamics</em>) and NEP (<em>neuroevolution potential</em>) program. It offers a user-friendly command-line interface to streamline common scripts and workflows, simplifying tasks such as script invocation, format conversion, structure sampling, NEP construction workflow, and various analysis, aiming to improve user productivity.</p>
 
 ## Features
-- **Simplified Script Invocation**: Easily run scripts for GPUMD and NEP.
-- **Workflow Automation**: Automate common tasks to save time and reduce manual intervention.
-- **User-Friendly Interface**: Intuitive shell commands designed to enhance user experience.
+- **Data Preparation**: Convert, label, sample, split, filter, and inspect atomistic datasets.
+- **Workflow Automation**: Prepare batch DFT/MD calculations and active-learning workflows.
+- **Calculation and Analysis**: Calculate and analyze structural, transport, and NEP-related properties.
+- **Visualization and Post-processing**: Visualize NEP training, molecular dynamics, diffusion, and thermal-transport results.
+- **Flexible Interface**: Use an interactive menu or direct command-line options.
 
 ## Installation
-To install `GPUMDkit`, follow these steps:
 
-1. Clone the repository or download the whole project.
-
-    ```
-    git clone https://github.com/zhyan0603/GPUMDkit.git
-    ```
-
-    use `-b` options if you want to download the specified branch, for example:
-
-    ```
-    git clone -b dev https://github.com/zhyan0603/GPUMDkit.git
-    ```
-
-2. Run the following command:
-   
-    ```
-    cd GPUMDkit; source ./install.sh
-    ```
-    
-
-## Dependencies
-
-Some advanced features of `GPUMDkit` require some Python packages:
+### Conda (Recommended)
 
 ```bash
-# Create a clean conda environment
-conda create -n gpumdkit python=3.12
+conda create -n gpumdkit -c gpumdkit -c conda-forge gpumdkit
 conda activate gpumdkit
-
-# Install the required packages
-pip install neptrain ase pymatgen dpdata
 ```
 
-Tip: Make sure the `gpumdkit` environment is activated before using `GPUMDkit` features.
+Some features require optional packages:
+
+```bash
+pip install neptrain calorine
+```
+
+### From Source
+
+```bash
+git clone https://github.com/zhyan0603/GPUMDkit.git
+cd GPUMDkit
+source ./install.sh
+```
 
 ## Update
 
-If your device has access to `github`, simply run this command:
+### Conda Installation
 
+If `GPUMDkit` was installed with Conda, update it using:
+
+```bash
+conda activate gpumdkit
+conda update -c gpumdkit -c conda-forge gpumdkit
 ```
+
+Optional dependencies installed with pip can be updated separately if needed:
+
+```bash
+pip install --upgrade neptrain calorine
+```
+
+### Source Installation
+
+If `GPUMDkit` was installed from the source repository, run:
+
+```bash
 gpumdkit.sh -update
 ```
 
-Otherwise you will need to download the new package manually.
+This command checks the currently installed Git branch and pulls the latest updates from the same branch.
 
-```
+Alternatively, download the latest source archive manually:
+
+```bash
 wget https://github.com/zhyan0603/GPUMDkit/archive/refs/heads/main.zip
 ```
 
@@ -102,7 +109,7 @@ There are two options, <u>*interactive mode*</u> and <u>*command-line mode*</u>
              | |_| |  __/| |_| | |  | | |_| |   <| | |_
               \____|_|    \___/|_|  |_|____/|_|\_\_|\__|
     
-              GPUMDkit Version 1.5.6 (dev) (2026-06-17)
+              GPUMDkit Version 1.5.6 (dev) (2026-07-10)
         Core Developer: Zihan YAN (yanzihan@westlake.edu.cn)
      Main Contributors: Denan LI, Xin WU, Zhoulin LIU & Chen HUA
     
@@ -132,13 +139,14 @@ the help information:
 
 ```
 +-------------------------------------------------------------------------------------------------------+
-|                          GPUMDkit 1.5.6 (dev) (2026-06-17) Command Help                               |
+|                          GPUMDkit 1.5.6 (dev) (2026-07-10) Command Help                               |
 +-------------------------------------------------------------------------------------------------------+
 |                                          MAIN FUNCTIONS                                               |
 +-------------------------------------------------------------------------------------------------------+
 | -h            Show this help table            | -plt <type>        Plot and visualization tools       |
 | -calc <type>  Calculator tools                | -time <gpumd|nep>  Time-consuming analyzer            |
 | -update       Update GPUMDkit                 | -clean             Clean extra files in current dir   |
+| -skill        Show GPUMDkit agent skill info  | -doctor            Check Python environment           |
 +-------------------------------------------------------------------------------------------------------+
 |                                         FORMAT CONVERSION                                             |
 +-------------------------------------------------------------------------------------------------------+
@@ -150,7 +158,7 @@ the help information:
 | -traj2exyz    ASE traj -> extxyz              | -replicate         Replicate structure                |
 | -addgroup     Add group labels                | -addweight         Add structure weight in extxyz     |
 | -clean_xyz    Clean extra info in extxyz      | -get_frame         Extract specific frame             |
-| -frame_range  Extract frames by range         |                                                       |
+| -frame_range  Extract frames by range         | -dp2xyz            DeepMD npy -> extxyz               |
 +-------------------------------------------------------------------------------------------------------+
 |                                            ANALYSIS                                                   |
 +-------------------------------------------------------------------------------------------------------+
@@ -161,7 +169,7 @@ the help information:
 | -pda          Probability density analysis    | -filter_box        Filter by box-edge length          |
 | -pynep        Deprecated PyNEP sampling       | -nep_modifier      Modify NEP model interactively     |
 +-------------------------------------------------------------------------------------------------------+
-| Detailed usage: gpumdkit.sh -<option> -h    Plot details: gpumdkit.sh -plt <type> -h                  |
+| Python option help: gpumdkit.sh -<option> -h    Plot list: gpumdkit.sh -plt -h                     |
 +-------------------------------------------------------------------------------------------------------+
 ```
 
@@ -175,9 +183,9 @@ the help information:
 
 ```
  +-----------------------------------------------------------------------------------------------+
- |                     GPUMDkit 1.5.6 (dev) (2026-06-17) PLOT & VISUALIZATION TOOLS              |
+ |                     GPUMDkit 1.5.6 (dev) (2026-07-10) PLOT & VISUALIZATION TOOLS              |
  +-----------------------------------------------------------------------------------------------+
- |  Usage: gpumdkit.sh -plt <type>                        Help: gpumdkit.sh -plt <type> -h       |
+ |  Usage: gpumdkit.sh -plt <type>                        List: gpumdkit.sh -plt -h              |
  +-----------------------------------------------------------------------------------------------+
  |                                    NEP Training & Evaluation                                  |
  +-----------------------------------------------------------------------------------------------+
@@ -265,13 +273,13 @@ You can also save images as PNG if your device doesn't support visualization:
 gpumdkit.sh -plt thermo save
 ```
 
-Refer to our [documentation](https://zhyan0603.github.io/GPUMDkit/) for more detailed examples and command options.
+Refer to our [documentation](https://gpumdkit.cn/) for more detailed examples and command options.
 
 #### Custom Commands
 
 `GPUMDkit` now supports custom commands via `~/.gpumdkit.in`.
 
-You can add your own shortcuts (e.g., `gpumdkit.sh -yourcommand`) by defining functions in this file. This allows you to extend `GPUMDkit` with personal scripts. See [custom command documentation](https://zhyan0603.github.io/GPUMDkit/) for details.
+You can add your own shortcuts (e.g., `gpumdkit.sh -yourcommand`) by defining functions in this file. This allows you to extend `GPUMDkit` with personal scripts. See [custom command documentation](https://gpumdkit.cn/) for details.
 
 #### Tab Completion Support
 

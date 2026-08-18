@@ -12,6 +12,7 @@ GPUMDkit helps you perform common tasks in computational materials science witho
 | I want to... | Tutorial |
 |--------------|----------|
 | Install GPUMDkit and run my first command | [Quick Start](quick_start.md) |
+| Plan a GPUMD/NEP simulation and its post-processing | [Simulation and Post-processing](simulation_and_postprocessing.md) |
 | Convert VASP, LAMMPS, CP2K, or CIF files to extxyz | [Format Conversion](format_conversion.md) |
 | Check structure distances, filter datasets, or find outliers | [Analyzer Scripts](analyzer_scripts.md) |
 | Calculate MSD, ionic conductivity, or descriptors | [Calculator Scripts](calculator_scripts.md) |
@@ -25,18 +26,25 @@ GPUMDkit helps you perform common tasks in computational materials science witho
 
 ### Installation
 
+#### Conda (Recommended)
+
+```bash
+conda create -n gpumdkit -c gpumdkit -c conda-forge gpumdkit
+conda activate gpumdkit
+```
+
+Some features require optional packages:
+
+```bash
+pip install neptrain calorine
+```
+
+#### From Source
+
 ```bash
 git clone https://github.com/zhyan0603/GPUMDkit.git
 cd GPUMDkit
 source ./install.sh
-```
-
-### Dependencies
-
-```bash
-conda create -n gpumdkit python=3.12
-conda activate gpumdkit
-pip install neptrain dpdata calorine
 ```
 
 ## Interactive mode
@@ -80,6 +88,7 @@ Use `gpumdkit.sh -h` to see all available options.
 | Tutorial | Description |
 |----------|-------------|
 | [Quick Start](quick_start.md) | Installation and first steps |
+| [Simulation and Post-processing](simulation_and_postprocessing.md) | End-to-end GPUMD/NEP workflow and Arrhenius example |
 | [Command Reference](command_reference.md) | One-page CLI and menu reference |
 | [Format Conversion](format_conversion.md) | Convert between file formats |
 | [Calculator Scripts](calculator_scripts.md) | Compute material properties |
@@ -95,4 +104,4 @@ Use `gpumdkit.sh -h` to see all available options.
 ## Links
 
 - GitHub: https://github.com/zhyan0603/GPUMDkit
-- Documentation: https://zhyan0603.github.io/GPUMDkit/
+- Documentation: https://gpumdkit.cn/

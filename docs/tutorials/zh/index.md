@@ -12,6 +12,7 @@ GPUMDkit 帮助你在计算材料科学研究中完成常见任务，无需编�
 | 我想要... | 教程 |
 |-----------|------|
 | 安装 GPUMDkit 并运行第一个命令 | [快速入门](快速入门.md) |
+| 规划 GPUMD/NEP 模拟及其后处理 | [模拟与后处理](模拟与后处理.md) |
 | 将 VASP、LAMMPS、CP2K 或 CIF 文件转换为 extxyz | [格式转换](格式转换.md) |
 | 检查结构距离、过滤数据集或查找异常值 | [分析工具](分析工具.md) |
 | 计算 MSD、离子电导率或描述符 | [计算器脚本](计算器脚本.md) |
@@ -25,18 +26,25 @@ GPUMDkit 帮助你在计算材料科学研究中完成常见任务，无需编�
 
 ### 安装
 
+#### Conda（推荐）
+
+```bash
+conda create -n gpumdkit -c gpumdkit -c conda-forge gpumdkit
+conda activate gpumdkit
+```
+
+部分功能需要额外安装可选依赖：
+
+```bash
+pip install neptrain calorine
+```
+
+#### 从源码安装
+
 ```bash
 git clone https://github.com/zhyan0603/GPUMDkit.git
 cd GPUMDkit
 source ./install.sh
-```
-
-### 依赖
-
-```bash
-conda create -n gpumdkit python=3.12
-conda activate gpumdkit
-pip install neptrain dpdata calorine
 ```
 
 ## 交互模式
@@ -80,6 +88,7 @@ gpumdkit.sh -calc msd trajectory.xyz Li 10
 | 教程 | 描述 |
 |------|------|
 | [快速入门](快速入门.md) | 安装和第一步 |
+| [模拟与后处理](模拟与后处理.md) | GPUMD/NEP 全流程与 Arrhenius 示例 |
 | [命令参考](命令参考.md) | 常用 CLI 和菜单入口速查 |
 | [格式转换](格式转换.md) | 在文件格式之间转换 |
 | [计算器脚本](计算器脚本.md) | 计算材料属性 |
@@ -95,4 +104,4 @@ gpumdkit.sh -calc msd trajectory.xyz Li 10
 ## 链接
 
 - GitHub: https://github.com/zhyan0603/GPUMDkit
-- 文档: https://zhyan0603.github.io/GPUMDkit/
+- 文档: https://gpumdkit.cn/
